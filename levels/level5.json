@@ -1,0 +1,12 @@
+{
+  "cars": [
+    { "carID": "1", "position": "[2,3]", "length": "2", "orientation": "0" },
+    { "carID": "2", "position": "[0,0]", "length": "3", "orientation": "0" },
+    { "carID": "3", "position": "[0,5]", "length": "3", "orientation": "1" },
+    { "carID": "4", "position": "[1,2]", "length": "2", "orientation": "1" },
+    { "carID": "5", "position": "[1,3]", "length": "3", "orientation": "1" },
+    { "carID": "6", "position": "[3,3]", "length": "2", "orientation": "1" },
+    { "carID": "7", "position": "[3,4]", "length": "2", "orientation": "0" },
+    { "carID": "8", "position": "[5,3]", "length": "2", "orientation": "0" }
+  ]
+}

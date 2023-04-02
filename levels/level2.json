@@ -1,0 +1,9 @@
+{
+  "cars": [
+    { "carID": "1", "position": "[2,0]", "length": "2", "orientation": "0" },
+    { "carID": "2", "position": "[0,2]", "length": "3", "orientation": "1" },
+    { "carID": "3", "position": "[4,1]", "length": "2", "orientation": "1" },
+    { "carID": "4", "position": "[4,2]", "length": "2", "orientation": "0" },
+    { "carID": "5", "position": "[3,4]", "length": "3", "orientation": "1" }
+  ]
+}
