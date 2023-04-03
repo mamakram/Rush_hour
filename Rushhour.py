@@ -2,7 +2,7 @@ import sys
 import os
 import random
 import json
-from PySide6.QtWidgets import QApplication, QFrame,QGridLayout,QVBoxLayout,QWidget,QSizePolicy,QComboBox,QPushButton,QLabel,QSizePolicy
+from PySide6.QtWidgets import QApplication, QFrame,QGridLayout,QVBoxLayout,QHBoxLayout,QWidget,QSizePolicy,QComboBox,QPushButton,QLabel,QSizePolicy
 from PySide6.QtCore import *
 from PySide6.QtGui import *
 PARKING_SIZE = 6 #GRID SIZE IS PARKING_SIZE*PARKING_SIZE
@@ -46,14 +46,13 @@ class Car(QWidget):
         return self.colors
     
     def mousePressEvent(self,event):
-        print("hi")
         self.board.selectedCar = self.id
 
 
 class Application(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setGeometry(50, 50, 500, 500)
+        self.setGeometry(50, 50, 600, 500)
         self.setBaseSize(100, 100)
         self.grid = [[EMPTY]*PARKING_SIZE for _ in range(PARKING_SIZE)] # 0 for empty space, num for car
         self.cars = dict() #dictionary mapping carID to car object
@@ -73,28 +72,39 @@ class Application(QFrame):
         self.layout.addWidget(button)
         self.gridLayout = QGridLayout()
         self.gridLayout.setSpacing(0)
+        instructionsLayout = QVBoxLayout()
+        label1 = QLabel("Select Car with Mouse") 
+        label2 = QLabel("use Z Q S D to \n move the Car") 
+        label1.setSizePolicy(QSizePolicy.Fixed,QSizePolicy.Expanding)
+        label2.setSizePolicy(QSizePolicy.Fixed,QSizePolicy.Expanding)
+        instructionsLayout.addWidget(label1)
+        instructionsLayout.addWidget(label2)
+        wrapper = QHBoxLayout() 
+        wrapper.addLayout(self.gridLayout)
+        wrapper.addLayout(instructionsLayout)
         self.drawSquares()
-        self.layout.addLayout(self.gridLayout)
+        self.layout.addLayout(wrapper)
         self.setLayout(self.layout)
         self.selectedCar = None
         self.won = False
         self.updateGrid()
 
-"""
-create empty grid
-"""
+    """
+    create empty grid
+    """
     def drawSquares(self):
         for row in range(PARKING_SIZE):
             for col in range(PARKING_SIZE):
                 square = QWidget(self)
+                square.setSizePolicy(QSizePolicy.Preferred,QSizePolicy.Preferred)
                 square.setStyleSheet(f"background-color: rgb(100,100 ,100 )")
                 square.setObjectName(str(row)+str(col))
                 self.gridLayout.addWidget(square, row, col)
 
 
-"""
-update grid view based on car positions 
-"""
+    """
+    update grid view based on car positions 
+    """
     def updateGrid(self):
         if self.won:
             self.wonLabel.setHidden(False)
@@ -109,9 +119,9 @@ update grid view based on car positions
                 else:
                     self.gridLayout.itemAt(row*PARKING_SIZE+col).widget().setStyleSheet(f"background-color: rgb(100,100 ,100 )")
 
-"""
-check if space given parameters is free (no cars)
-"""
+    """
+    check if space given parameters is free (no cars)
+    """
     def isFree(self,y,x,length,orientation):
         for i in range(length):
             if self.grid[y+int(orientation==VERTICAL)*i][x+int(orientation==HORIZONTAL)*i]!=0:
@@ -139,11 +149,11 @@ check if space given parameters is free (no cars)
         self.updateGrid()
 
 
-"""
-move car and check validity of move
-Checks for win
-@move: -1 or 1 (left or right, up or down)
-"""
+    """
+    move car and check validity of move
+    Checks for win
+    @move: -1 or 1 (left or right, up or down)
+    """
     def moveCar(self,car,move):
         if car.orientation == VERTICAL:  #vertical movement
             if move == 1: #down
@@ -171,6 +181,12 @@ Checks for win
                     car.x-=1
         if not self.won:
             self.gridLayout.addWidget(car,car.y,car.x,1+int(car.orientation==VERTICAL)*(car.length-1),1+int(car.orientation==HORIZONTAL)*(car.length-1))
+        else:
+            player = self.cars[1]
+            for i in range(player.length):
+                self.grid[player.y + int(player.orientation==VERTICAL)*(i)][player.x + int(player.orientation==HORIZONTAL)*(i)] = 0
+            self.gridLayout.removeWidget(player)
+        
         self.updateGrid()
 
     def clearLayout(self,layout):
@@ -179,9 +195,9 @@ Checks for win
             if child.widget():
                 child.widget().deleteLater()
 
-"""
-loads cars from json scenario given as parameter and resets game
-"""
+    """
+    loads cars from json scenario given as parameter and resets game
+    """
     def loadScenario(self,scenario):
         self.won = False
         self.clearLayout(self.gridLayout)
@@ -194,10 +210,10 @@ loads cars from json scenario given as parameter and resets game
                 self.spawnCar(int(car["carID"]),int(car["length"]),json.loads(car["position"]),int(car["orientation"]))
         self.updateGrid()
 
-"""
-spawn car at given parameters
-pos is starting point as [y,x] grid coordinates
-"""
+    """
+    spawn car at given parameters
+    pos is starting point as [y,x] grid coordinates
+    """
     def spawnCar(self,carID,length,pos,orientation):
         colors = COLORS[carID]
         if self.isFree(pos[0],pos[1],length,orientation):
