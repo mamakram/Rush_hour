@@ -2,7 +2,7 @@ import sys
 import os
 import random
 import json
-from PySide6.QtWidgets import QApplication, QFrame,QGridLayout,QVBoxLayout,QHBoxLayout,QWidget,QSizePolicy,QComboBox,QPushButton,QLabel,QSizePolicy
+from PySide6.QtWidgets import QApplication, QFrame,QGridLayout,QVBoxLayout,QHBoxLayout,QWidget,QSizePolicy,QComboBox,QPushButton,QLabel,QSizePolicy,QGraphicsOpacityEffect
 from PySide6.QtCore import *
 from PySide6.QtGui import *
 PARKING_SIZE = 6 #GRID SIZE IS PARKING_SIZE*PARKING_SIZE
@@ -41,12 +41,53 @@ class Car(QWidget):
         self.orientation = orientation
         self.length = length
         self.colors = colors
-    
+        self.qcolor = QColor(colors[0],colors[1],colors[2])
+        self.child = QWidget(self)
+        self.opacity_effect = QGraphicsOpacityEffect()
+        self.setGraphicsEffect(self.opacity_effect)
+        self.animation_group = QSequentialAnimationGroup(self)
+        animation1 = QPropertyAnimation(self.opacity_effect, b"opacity")
+        animation1.setDuration(500)
+        animation1.setStartValue(1)
+        animation1.setEndValue(0.7)
+        self.animation_group.addAnimation(animation1)
+        # Second animation: pulse from 1 to 0.5
+        animation2 = QPropertyAnimation(self.opacity_effect, b"opacity")
+        animation2.setDuration(500)
+        animation2.setStartValue(0.7)
+        animation2.setEndValue(1)
+        self.animation_group.addAnimation(animation2)
+
+        # Set animation group to loop indefinitely
+        self.animation_group.setLoopCount(-1)
+        self.opacity_effect.setOpacity(1)
+
+
     def getColors(self):
         return self.colors
     
     def mousePressEvent(self,event):
+        if self.board.selectedCar is not None:
+            self.board.cars[self.board.selectedCar].deselect()
         self.board.selectedCar = self.id
+        self.select()
+    
+
+    def select(self):
+        self.animation_group.start()
+        #self.anim_2 = QPropertyAnimation(self.effect, b"opacity")
+        #self.anim_2.setStartValue(1)
+        #self.anim_2.setEndValue(0)
+        #self.anim_2.setDuration(10000)
+        #self.anim_2.start()
+
+    def deselect(self):
+        self.animation_group.stop()
+        self.opacity_effect.setOpacity(1)
+
+    def paintEvent(self,event):
+        p = QPainter(self)
+        p.fillRect(event.rect(),self.qcolor)
 
 
 class Application(QFrame):
@@ -71,7 +112,7 @@ class Application(QFrame):
         self.layout.addWidget(self.comboBox)
         self.layout.addWidget(button)
         self.gridLayout = QGridLayout()
-        self.gridLayout.setSpacing(0)
+        self.gridLayout.setSpacing(1)
         instructionsLayout = QVBoxLayout()
         label1 = QLabel("Select Car with Mouse") 
         label2 = QLabel("use Z Q S D to \n move the Car") 
@@ -97,7 +138,7 @@ class Application(QFrame):
             for col in range(PARKING_SIZE):
                 square = QWidget(self)
                 square.setSizePolicy(QSizePolicy.Preferred,QSizePolicy.Preferred)
-                square.setStyleSheet(f"background-color: rgb(100,100 ,100 )")
+                square.setStyleSheet(f"background-color: rgb(100,100 ,100 );border: 1px solid; border-color: white;")
                 square.setObjectName(str(row)+str(col))
                 self.gridLayout.addWidget(square, row, col)
 
@@ -115,7 +156,7 @@ class Application(QFrame):
                 id = self.grid[row][col]
                 if id !=0:
                     colors = self.cars[id].getColors()
-                    self.gridLayout.itemAt(row*PARKING_SIZE+col).widget().setStyleSheet(f"background-color: rgb({colors[0]},{colors[1]} ,{colors[2]})")
+                    #self.gridLayout.itemAt(row*PARKING_SIZE+col).widget().setStyleSheet(f"background-color: rgb({colors[0]},{colors[1]} ,{colors[2]})")
                 else:
                     self.gridLayout.itemAt(row*PARKING_SIZE+col).widget().setStyleSheet(f"background-color: rgb(100,100 ,100 )")
 
@@ -185,7 +226,8 @@ class Application(QFrame):
             player = self.cars[1]
             for i in range(player.length):
                 self.grid[player.y + int(player.orientation==VERTICAL)*(i)][player.x + int(player.orientation==HORIZONTAL)*(i)] = 0
-            self.gridLayout.removeWidget(player)
+            #self.gridLayout.removeWidget(player)
+            player.deleteLater()
         
         self.updateGrid()
 
@@ -200,6 +242,7 @@ class Application(QFrame):
     """
     def loadScenario(self,scenario):
         self.won = False
+        self.selectedCar = None
         self.clearLayout(self.gridLayout)
         self.drawSquares()
         self.grid = [[EMPTY]*PARKING_SIZE for _ in range(PARKING_SIZE)] # 0 for empty space, num for car
